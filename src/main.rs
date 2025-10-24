@@ -80,7 +80,7 @@ fn get_status_codes() -> HashMap<u16, &'static str> {
     map
 }
 
-fn get_codes(status_codes: HashMap<u16, &'static str>) -> Vec<u16> {
+fn get_codes(status_codes: &HashMap<u16, &'static str>) -> Vec<u16> {
     let mut codes: Vec<u16> = status_codes.keys().copied().collect();
     codes.sort();
     codes
@@ -88,7 +88,7 @@ fn get_codes(status_codes: HashMap<u16, &'static str>) -> Vec<u16> {
 
 fn main() {
     let status_codes = get_status_codes();
-    let codes = get_codes(status_codes.clone());
+    let codes = get_codes(&status_codes);
 
     let mut table = Table::new();
     table.load_preset(UTF8_BORDERS_ONLY);
@@ -100,7 +100,7 @@ fn main() {
     for code in codes {
         table.add_row(vec![
             Cell::new(code.to_string()).fg(Color::Red),
-            Cell::new(status_codes[&code].to_string()).fg(Color::Green),
+            Cell::new(status_codes[&code]).fg(Color::Green),
         ]);
     }
 
