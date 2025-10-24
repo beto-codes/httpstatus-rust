@@ -30,6 +30,7 @@ fn get_status_codes() -> BTreeMap<u16, &'static str> {
     map.insert(303, "See Other");
     map.insert(304, "Not Modified");
     map.insert(305, "Use Proxy");
+    map.insert(306, "Switch Proxy");
     map.insert(307, "Temporary Redirect");
     map.insert(308, "Permanent Redirect");
 
@@ -98,4 +99,87 @@ fn main() {
     }
 
     println!("{}", table);
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::get_status_codes;
+
+    #[test]
+    fn test_status_codes_count() {
+        let status_codes = get_status_codes();
+        assert_eq!(status_codes.len(), 63, "Should have 63 HTTP status codes")
+    }
+
+    #[test]
+    fn test_status_codes_order() {
+        let status_codes = get_status_codes();
+        let codes: Vec<u16> = status_codes.keys().copied().collect();
+        for i in 1..codes.len() {
+            assert!(
+                codes[i - 1] < codes[i],
+                "Codes should be in ascending order"
+            )
+        }
+    }
+
+    #[test]
+    fn test_common_status_codes() {
+        let status_codes = get_status_codes();
+
+        assert_eq!(status_codes.get(&200), Some(&"OK"));
+        assert_eq!(status_codes.get(&302), Some(&"Found"));
+        assert_eq!(status_codes.get(&404), Some(&"Not Found"));
+        assert_eq!(status_codes.get(&418), Some(&"I'm a teapot"));
+    }
+
+    #[test]
+    fn test_status_code_ranges() {
+        let status_codes = get_status_codes();
+        let count_1xx = status_codes
+            .keys()
+            .filter(|&&c| (100..200).contains(&c))
+            .count();
+        let count_2xx = status_codes
+            .keys()
+            .filter(|&&c| (200..300).contains(&c))
+            .count();
+        let count_3xx = status_codes
+            .keys()
+            .filter(|&&c| (300..400).contains(&c))
+            .count();
+        let count_4xx = status_codes
+            .keys()
+            .filter(|&&c| (400..500).contains(&c))
+            .count();
+        let count_5xx = status_codes
+            .keys()
+            .filter(|&&c| (500..600).contains(&c))
+            .count();
+
+        assert_eq!(count_1xx, 4, "Should have 4 informational codes");
+        assert_eq!(count_2xx, 10, "Should have 10 success codes");
+        assert_eq!(count_3xx, 9, "Should have 9 redirection codes");
+        assert_eq!(count_4xx, 29, "Should have 29 client error codes");
+        assert_eq!(count_5xx, 11, "Should have 11 client error codes");
+    }
+
+    #[test]
+    fn test_non_existent_status_code() {
+        let status_codes = get_status_codes();
+        assert!(!status_codes.contains_key(&999));
+        assert!(!status_codes.contains_key(&666));
+    }
+
+    #[test]
+    fn test_all_values_are_non_empty() {
+        let status_codes = get_status_codes();
+        for (code, description) in &status_codes {
+            assert!(
+                !description.is_empty(),
+                "Code {} has an empty description",
+                code
+            )
+        }
+    }
 }

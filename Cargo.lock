@@ -68,7 +68,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "httpstatus-rust"
+name = "httpstatus_rust"
 version = "0.1.0"
 dependencies = [
  "comfy-table",
