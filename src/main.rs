@@ -1,6 +1,9 @@
 use comfy_table::presets::UTF8_BORDERS_ONLY;
 use comfy_table::{Cell, Color, Table};
 use std::collections::BTreeMap;
+use std::env;
+use std::io::Write;
+use std::process::{Command, Stdio};
 
 fn get_status_codes() -> BTreeMap<u16, &'static str> {
     let mut map = BTreeMap::<u16, &'static str>::new();
@@ -81,9 +84,33 @@ fn get_status_codes() -> BTreeMap<u16, &'static str> {
     map
 }
 
-fn main() {
-    let status_codes = get_status_codes();
+fn print_json(status_codes: &BTreeMap<u16, &'static str>) {
+    let json = match serde_json::to_string(status_codes) {
+        Ok(j) => j,
+        Err(e) => {
+            eprintln!("Failed to serialize JSON: {}", e);
+            return;
+        }
+    };
 
+    let child = Command::new("jq").arg(".").stdin(Stdio::piped()).spawn();
+    match child {
+        Ok(mut process) => {
+            if let Some(mut stdin) = process.stdin.take() {
+                let _ = stdin.write_all(json.as_bytes());
+            }
+            let _ = process.wait();
+        }
+        Err(_) => {
+            println!(
+                "{}",
+                serde_json::to_string_pretty(status_codes).unwrap_or(json)
+            );
+        }
+    }
+}
+
+fn print_table(status_codes: &BTreeMap<u16, &'static str>) {
     let mut table = Table::new();
     table.load_preset(UTF8_BORDERS_ONLY);
     table.set_header(vec![
@@ -91,7 +118,7 @@ fn main() {
         Cell::new("Description").fg(Color::Yellow),
     ]);
 
-    for (&code, &description) in &status_codes {
+    for (&code, &description) in status_codes {
         table.add_row(vec![
             Cell::new(code.to_string()).fg(Color::Red),
             Cell::new(description).fg(Color::Green),
@@ -99,6 +126,17 @@ fn main() {
     }
 
     println!("{}", table);
+}
+
+fn main() {
+    let status_codes = get_status_codes();
+    let args: Vec<String> = env::args().collect();
+
+    if args.len() > 1 && (args[1] == "--json" || args[1] == "-j") {
+        print_json(&status_codes);
+    } else {
+        print_table(&status_codes);
+    }
 }
 
 #[cfg(test)]
@@ -181,5 +219,18 @@ mod tests {
                 code
             )
         }
+    }
+
+    #[test]
+    fn test_json_output_is_valid() {
+        let status_codes = get_status_codes();
+        let json = serde_json::to_string(&status_codes);
+        assert!(json.is_ok(), "SHould serialize to valid JSON");
+
+        let json_str = json.unwrap();
+        assert!(json_str.starts_with('{'));
+        assert!(json_str.ends_with('}'));
+        assert!(json_str.contains("\"100\""));
+        assert!(json_str.contains("\"500\""));
     }
 }
