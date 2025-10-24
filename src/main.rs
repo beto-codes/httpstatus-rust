@@ -1,9 +1,9 @@
 use comfy_table::presets::UTF8_BORDERS_ONLY;
 use comfy_table::{Cell, Color, Table};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
-fn get_status_codes() -> HashMap<u16, &'static str> {
-    let mut map = HashMap::<u16, &'static str>::new();
+fn get_status_codes() -> BTreeMap<u16, &'static str> {
+    let mut map = BTreeMap::<u16, &'static str>::new();
 
     // 1xx Informational
     map.insert(100, "Continue");
@@ -80,15 +80,8 @@ fn get_status_codes() -> HashMap<u16, &'static str> {
     map
 }
 
-fn get_codes(status_codes: &HashMap<u16, &'static str>) -> Vec<u16> {
-    let mut codes: Vec<u16> = status_codes.keys().copied().collect();
-    codes.sort();
-    codes
-}
-
 fn main() {
     let status_codes = get_status_codes();
-    let codes = get_codes(&status_codes);
 
     let mut table = Table::new();
     table.load_preset(UTF8_BORDERS_ONLY);
@@ -97,10 +90,10 @@ fn main() {
         Cell::new("Description").fg(Color::Yellow),
     ]);
 
-    for code in codes {
+    for (&code, &description) in &status_codes {
         table.add_row(vec![
             Cell::new(code.to_string()).fg(Color::Red),
-            Cell::new(status_codes[&code]).fg(Color::Green),
+            Cell::new(description).fg(Color::Green),
         ]);
     }
 
