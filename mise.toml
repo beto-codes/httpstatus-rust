@@ -1,0 +1,12 @@
+[tasks.build]
+description = "build the binary with the name from the cargo.toml file"
+run = "cargo build --release"
+
+[tasks.launch]
+description = "run httpstatus in dev mode"
+run = "cargo run"
+
+[tasks.install]
+description = "install the bin on the users .local/bin"
+depends = ["build"]
+run = "cp ./target/release/httpstatus $HOME/.local/bin/httpstatus"
