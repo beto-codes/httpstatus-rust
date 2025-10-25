@@ -225,7 +225,7 @@ mod tests {
     fn test_json_output_is_valid() {
         let status_codes = get_status_codes();
         let json = serde_json::to_string(&status_codes);
-        assert!(json.is_ok(), "SHould serialize to valid JSON");
+        assert!(json.is_ok(), "Should serialize to valid JSON");
 
         let json_str = json.unwrap();
         assert!(json_str.starts_with('{'));
